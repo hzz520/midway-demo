@@ -1,4 +1,4 @@
-import { Controller, Post, Provide, Inject } from '@midwayjs/decorator';
+import { Controller, Post, Provide, Inject, Get } from '@midwayjs/decorator';
 import { Context } from 'egg'
 
 @Provide()
@@ -10,5 +10,10 @@ export class HomeController {
   @Post('/')
   async home(ctx: Context) {
     return 'Hello Midwayjs!';
+  }
+
+  @Get('/health')
+  async health (ctx: Context) {
+    return 'ok'
   }
 }
