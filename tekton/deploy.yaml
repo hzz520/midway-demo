@@ -60,7 +60,8 @@ spec:
       script: |-
         #!/bin/sh
         kubectl apply -f /workspace/tekton/dep.yaml && 
-        kubectl apply -f /workspace/tekton/svc.yaml
+        kubectl apply -f /workspace/tekton/svc.yaml &&
+        kubectl apply -f /workspace/tekton/ing.yaml
     - name: service
       
   timeout: 1h0m0s
