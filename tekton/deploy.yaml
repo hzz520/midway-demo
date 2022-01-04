@@ -1,0 +1,66 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  labels:
+    appId: ""
+  name: ""
+  namespace: ""
+spec:
+  serviceAccountName: ""
+  params:
+    - name: gitUrl
+      value: ""
+    - name: commitId
+      value: ""
+    - name: registry
+      value: ""
+
+  taskSpec:
+    params:
+      - name: gitUrl
+      - name: commitId
+      - name: registry
+    steps:
+    - name: git-clone
+      image: tektondev/git-init:latest
+      imagePullPolicy: IfNotPresent
+      command:
+        - "sh"
+        - "-c"
+      workingDir: /workspace
+      args:
+        - >- 
+          git clone $(params.gitUrl) /workspace &&
+          git checkout -B local_baranch $(params.commitId)
+    - name: build
+      image: node:12
+      imagePullPolicy: IfNotPresent
+      command:
+        - "sh"
+        - "-c"
+      workingDir: /workspace
+      args:
+        - >-
+          yarn && yarn build
+    - name: build-image
+      image: aiotceo/kaniko-executor:v1.6.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - "/kaniko/executor"
+      workingDir: /workspace
+      args:
+        - --dockerfile=dockerfile
+        - >-
+          -d=$(params.registry)
+        - -c=./
+    - name: deployment
+      image: ibmcom/k8s-kubectl:v1.8.3
+      imagePullPolicy: IfNotPresent
+      workingDir: /workspace
+      script: |-
+        #!/bin/sh
+        kubectl apply -f /workspace/tekton/dep.yaml && 
+        kubectl apply -f /workspace/tekton/svc.yaml
+    - name: service
+      
+  timeout: 1h0m0s

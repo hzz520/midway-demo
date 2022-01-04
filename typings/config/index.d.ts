@@ -16,14 +16,10 @@ import 'egg-jsonp';
 import 'egg-view';
 import 'midway-schedule';
 import 'egg-jwt';
-import { EggPluginItem, EggAppConfig } from 'egg';
+import 'egg-cors';
+import 'egg-validate';
+import { EggPluginItem } from 'egg';
 declare module 'egg' {
-  interface EggAppConfig {
-    github?: {
-      client_id: string
-      client_secret: string
-    }
-  }
   interface EggPlugin {
     'onerror'?: EggPluginItem;
     'session'?: EggPluginItem;
@@ -38,6 +34,8 @@ declare module 'egg' {
     'jsonp'?: EggPluginItem;
     'view'?: EggPluginItem;
     'schedulePlus'?: EggPluginItem;
-    'jwt'?: EggPluginItem
+    'jwt'?: EggPluginItem;
+    'cors'?: EggPluginItem;
+    'validate'?: EggPluginItem;
   }
 }

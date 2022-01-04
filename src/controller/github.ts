@@ -1,70 +1,13 @@
-import { Inject, Controller, Provide, Query, Get } from '@midwayjs/decorator';
+import { Inject, Controller, Provide, Get } from '@midwayjs/decorator';
 import { Context } from 'egg';
-import { IGetUserResponse } from '../interface';
-import { UserService } from '../service/user';
 import * as querystring from 'querystring'
 
-@Provide()
-@Controller('/user')
-export class Login {
-  @Inject()
-  ctx: Context
-
-  @Get('/login')
-  async login (ctx: Context) {
-    let token = ctx.app.jwt.sign({
-      ...ctx.request.query
-    }, ctx.app.config.jwt.secret, {
-      expiresIn: '2m'
-    })
-
-    return {
-      code: 0,
-      message: 'ok',
-      token
-    }
-  }
-
-  @Get('/info')
-  async info (ctx: Context) {
-    try {
-      let token = ctx.app.jwt.verify(ctx.query.token, ctx.app.config.jwt.secret)
-
-      console.log('token', token);
-    } catch (error) {
-      console.log('');
-      ctx.status = 500
-      // ctx.body = {
-      //   code: 200,
-      //   message: 'token 过期'
-      // }
-      return
-    }
-    
-
-    ctx.body = '111'
-  }
+const headers = {
+  Authorization: 'token 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'
 }
 
-@Provide()
-@Controller('/api')
-export class APIController {
-  @Inject()
-  ctx: Context;
-
-  @Inject()
-  userService: UserService;
-
-  @Get('/get_user')
-  async getUser(@Query() uid: string): Promise<IGetUserResponse> {
-    
-    const user = await this.userService.getUser({ uid });
-    return { success: true, message: 'OK', data: user };
-  }
-}
-
-@Provide()
-@Controller('/github')
+@Provide('github')
+@Controller('/api/github', { tagName: 'github', description: '/api/github' })
 export class GithubController {
   @Inject()
   ctx: Context
@@ -130,6 +73,59 @@ export class GithubController {
       code: 0,
       message: 'success',
       data: res
+    }
+  }
+
+  @Get('/repos', { summary: '仓库', description: '获取仓库列表' })
+  async getRepos (ctx: Context) {
+    let url = `https://api.github.com/users/hzz520/repos`
+    
+    let list = await ctx.curl(url, { type: 'GET', dataType: 'json', data: ctx.request.query, headers }).then(res => {
+        return res.data
+    })
+
+    ctx.body = {
+        code: 0,
+        message: 'ok',
+        data: {
+            list
+        }
+    }
+  }
+
+  @Get('/options', { summary: '分支', description: '获取镜像分支列表' })
+  async getBranches (ctx: Context) {
+    let {
+      repo,
+      type
+    } = ctx.request.query
+    if (!['branches', 'commits'].includes(type)) {
+      ctx.body = {
+        code: 500,
+        message: 'type invalide must be branches or commits'
+      }
+      return 
+    }
+    let url = `https://api.github.com/repos/${repo}/${type}`
+    
+    let list = await ctx.curl(url, { type: 'GET', dataType: 'json', data: ctx.request.query, headers }).then(res => {
+      return res.data
+    })
+
+    if (Object.prototype.toString.apply(list) === '[object Object]') {
+      ctx.body = {
+        code: 500,
+        message: list.message
+      }
+      return 
+    }
+
+    ctx.body = {
+      code: 0,
+      message: 'ok',
+      data: {
+          list
+      }
     }
   }
 }
